@@ -472,6 +472,10 @@
                             <div class="info-label">Lớp:</div>
                             <div class="info-value" id="className">--</div>
                         </div>
+                        <div class="info-item">
+                            <div class="info-label">Mã phiếu:</div>
+                            <div class="info-value" id="billCode">--</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -691,6 +695,8 @@
             document.getElementById('studentName').textContent = studentData.ten_kh || "--";
             document.getElementById('schoolName').textContent = studentData.ten_truong || "--";
             document.getElementById('className').textContent = studentData.ten_lop || "--";
+            // Thêm mã thông báo phí (stt_rec)
+            document.getElementById('billCode').textContent = paymentInfo.stt_rec || "--";
             
             // Cập nhật nội dung chuyển khoản
             // Trích xuất tên học sinh (bỏ phần trong ngoặc nếu có)
