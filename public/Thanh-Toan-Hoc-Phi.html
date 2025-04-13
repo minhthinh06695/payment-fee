@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Học Phí</title>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #4285f4;
+            --accent-color: #fbbc05;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-color: #ddd;
+            --success-color: #34a853;
+            --error-color: #ea4335;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+        }
+        
+        /* Tạo overlay loading khi gọi API */
+        body.loading:before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+        }
+        
+        body.loading:after {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            z-index: 1001;
+            animation: spin 1s linear infinite;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: #103453;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .school-logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .payment-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .student-info {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .student-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .fee-amount {
+            text-align: right;
+        }
+        
+        .fee-discount {
+            color: var(--success-color);
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background-color: #f0f7ff;
+        }
+        
+        .payment-methods {
+            margin: 20px 0;
+        }
+        
+        .payment-method {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-method:hover {
+            border-color: var(--secondary-color);
+        }
+        
+        .payment-method.active {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+        }
+        
+        .payment-method-header {
+            display: flex;
+            align-items: center;
+        }
+        
+        .payment-method-radio {
+            margin-right: 10px;
+        }
+        
+        .payment-method-title {
+            font-weight: bold;
+        }
+        
+        .payment-method-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .payment-method.active .payment-method-content {
+            display: block;
+        }
+        
+        .bank-info {
+            background-color: var(--light-gray);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .bank-info p {
+            margin-bottom: 8px;
+        }
+        
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background-color: var(--light-gray);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .payment-note {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .payment-note h4 {
+            margin-bottom: 10px;
+            color: #e65100;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .confirmation-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .dialog-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .dialog-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .dialog-btn {
+            padding: 8px 16px;
+            margin-left: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .dialog-btn-confirm {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .dialog-btn-cancel {
+            background-color: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .success-message {
+            background-color: #e8f5e9;
+            border-left: 4px solid var(--success-color);
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success-message h3 {
+            color: var(--success-color);
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links a {
+            margin-left: 15px;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Spinner CSS cho loading */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-links {
+                margin-top: 15px;
+            }
+            
+            .footer-links a {
+                margin: 0 10px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                margin-bottom: 10px;
+            }
+        }
+        #qrLoadingIndicator {
+            display: none;
+        }
+        #qrCodeImage {
+            max-width: 200px;
+            max-height: 200px;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="school-logo">
+                    <img src="/image/logo.svg" alt="Trường Mầm Non Logo" style="height: 50px; vertical-align: middle; margin-right: 15px;">
+                </div>
+                <div class="payment-title">Thanh Toán Học Phí</div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="payment-card">
+            <div class="card-header">
+                Thông Tin Thanh Toán Học Phí
+            </div>
+            <div class="card-body">
+                <div class="student-info">
+                    <h3>Thông tin học sinh</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Mã học sinh:</div>
+                            <div class="info-value" id="studentCode">--</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Họ và tên:</div>
+                            <div class="info-value" id="studentName">--</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Trường:</div>
+                            <div class="info-value" id="schoolName">--</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Lớp:</div>
+                            <div class="info-value" id="className">--</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Chi tiết học phí</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="60%">Khoản phí</th>
+                            <th width="40%" class="fee-amount">Số tiền (VNĐ)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feeTable">
+                        <!-- Dữ liệu sẽ được điền bằng JavaScript -->
+                    </tbody>
+                </table>
+                
+                <div class="payment-methods">
+                    <h3>Phương thức thanh toán</h3>
+                    <div class="payment-method" id="qr-method">
+                        <div class="payment-method-header">
+                            <input type="radio" name="paymentMethod" id="qrCode" class="payment-method-radio" checked>
+                            <label for="qrCode" class="payment-method-title">Thanh toán bằng QR Code</label>
+                        </div>
+                        <div class="payment-method-content">
+                            <div class="qr-container">
+                                <div class="qr-code" id="qrCodeContainer">
+                                    <!-- QR code sẽ được hiển thị ở đây -->
+                                    <div id="qrLoadingIndicator" style="display: none;" class="spinner"></div>
+                                    <img id="qrCodeImage" style="max-width: 200px; max-height: 200px;">
+                                </div>
+                                <p>Quét mã QR bằng ứng dụng ngân hàng hoặc ví điện tử</p>
+                            </div>
+                            <p><em>Lưu ý: Mã QR chỉ có thời hạn trong ngày</em></p>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-method active" id="bank-method">
+                        <div class="payment-method-header">
+                            <input type="radio" name="paymentMethod" id="bankTransfer" class="payment-method-radio">
+                            <label for="bankTransfer" class="payment-method-title">Chuyển khoản ngân hàng</label>
+                        </div>
+                        <div class="payment-method-content">
+                            <div class="bank-info">
+                                <p><strong>Ngân hàng:</strong> Vietcombank</p>
+                                <p><strong>Số tài khoản:</strong> 1234567890</p>
+                                <p><strong>Tên tài khoản:</strong> Trường Mầm Non Bình An</p>
+                                <p><strong>Chi nhánh:</strong> TP. Hồ Chí Minh</p>
+                                <p><strong>Nội dung chuyển khoản:</strong> <span id="transferContent">[Mã học sinh] thanh toán học phí</span></p>
+                            </div>
+                            <p><em>Vui lòng chụp màn hình biên lai chuyển khoản và gửi về email: hocphi@binhantruong.edu.vn</em></p>
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+                
+                <div class="payment-note">
+                    <h4>Lưu ý quan trọng:</h4>
+                    <ul>
+                        <li>Vui lòng kiểm tra kỹ thông tin học sinh và số tiền trước khi thanh toán</li>
+                        <li>Thời hạn thanh toán: <strong>15 ngày</strong> kể từ ngày thông báo</li>
+                        <li>Mọi thắc mắc vui lòng liên hệ: <strong>028.1234.5678</strong> (trong giờ hành chính)</li>
+                    </ul>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="window.print()">In thông tin</button>
+                    <button class="btn" onclick="confirmPayment()">Xác nhận đã thanh toán</button>
+                </div>
+                
+                <div class="success-message" id="successMessage">
+                    <h3>Xác nhận thanh toán thành công!</h3>
+                    <p>Cảm ơn bạn đã hoàn tất thanh toán học phí. Nhà trường sẽ cập nhật thông tin thanh toán trong vòng 24 giờ làm việc.</p>
+                    <p>Mã xác nhận: <strong id="confirmationCode">--</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <div class="dialog-content">
+            <div class="dialog-header">Xác nhận thanh toán</div>
+            <p>Bạn xác nhận đã hoàn tất việc thanh toán học phí qua phương thức <span id="selectedMethod">chuyển khoản ngân hàng</span> với số tiền <span id="totalAmount">--</span> đồng?</p>
+            <div class="dialog-actions">
+                <button class="dialog-btn dialog-btn-cancel" onclick="closeConfirmation()">Hủy</button>
+                <button class="dialog-btn dialog-btn-confirm" onclick="completePayment()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="copyright">© 2025 Trường Mầm Non Bình An. Mọi quyền được bảo lưu.</div>
+                <div class="footer-links">
+                    <a href="#">Hỗ trợ</a>
+                    <a href="#">Liên hệ</a>
+                    <a href="#">Chính sách bảo mật</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Khai báo biến toàn cục để lưu dữ liệu từ API
+        let paymentData = null;
+        
+        // Hàm chính để lấy dữ liệu học phí
+        async function fetchStudentData() {
+            try {
+                // Lấy stt_rec từ tham số URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const sttRec = urlParams.get('stt_rec');
+                
+                console.log("Đang cố gắng tải dữ liệu cho mã hóa đơn:", sttRec);
+                            
+                // Quyết định sử dụng API thực hoặc API mẫu
+                let apiUrl;
+                if (1==0 && window.location.hostname === 'localhost') {
+                    // Sử dụng API mẫu khi chạy trên localhost
+                    apiUrl = "/mock-api/GetData";
+                    console.log("Đang chạy trên localhost, sử dụng API mẫu:", apiUrl);
+                } else {
+                    // Sử dụng API thực khi triển khai
+                    apiUrl = "https://dev.fast.com.vn/BHLBK_API/api/v2/getDataWithQR";
+                    console.log("Đang gọi API thực tế:", apiUrl);
+                }
+                
+                // Chuẩn bị dữ liệu cho API
+                const requestData = {
+                    "form": "ThongBaoPhi",
+                    "ngay_ct": formatDate(new Date()), // Ngày hiện tại dạng yyyy-MM-dd
+                    "stt_rec": sttRec
+                };
+                
+                console.log("Dữ liệu gửi đi:", JSON.stringify(requestData));
+                
+                // Hiển thị trạng thái đang tải
+                document.body.classList.add('loading');
+                
+                // Tạo Nonce và Token theo yêu cầu
+                const nonce = Math.random().toString(36).substring(2);
+                const authString = btoa('fastapi:fast123!@#').trim();
+                const token = `Basic ${authString}`;
+                
+                console.log("Tạo Nonce:", nonce);
+                console.log("Tạo Token:", token);
+                
+                // Gọi API để lấy dữ liệu
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token,
+                            'Nonce': nonce
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    console.log("Đã nhận phản hồi từ API:", response.status, response.statusText);
+                    
+                    // Kiểm tra nếu response không thành công
+                    if (!response.ok) {
+                        throw new Error(`API response error: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    // Chuyển response sang JSON
+                    paymentData = await response.json();
+                    console.log("Dữ liệu nhận về:", paymentData);
+                    
+                    // Kiểm tra dữ liệu trả về
+                    if (!paymentData.success) {
+                        throw new Error(`API error: ${paymentData.messages}`);
+                    }
+                    
+                    // Hiển thị dữ liệu học sinh
+                    renderStudentData();
+                    
+                    // Hiển thị QR Code nếu có
+                    if (paymentData?.qRStream) {
+                        console.log('Đã tìm thấy mã QR trong dữ liệu API - đang hiển thị');
+                        displayQRCode(paymentData?.qRStream);
+                    } else {
+                        console.log('Không có mã QR trong dữ liệu ban đầu');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi gọi API:', error);
+                    
+                    // Trong môi trường phát triển, sử dụng dữ liệu mẫu nếu API không hoạt động
+                    console.log('Sử dụng dữ liệu mẫu do không kết nối được API');
+                } finally {
+                    // Ẩn trạng thái đang tải
+                    document.body.classList.remove('loading');
+                }
+            } catch (error) {
+                console.error('Lỗi trong fetchStudentData:', error);
+                showError("Có lỗi xảy ra khi xử lý thông tin. Vui lòng thử lại sau!");
+            }
+        }
+        
+        // Hiển thị thông tin học sinh và chi tiết học phí
+        function renderStudentData() {
+            if (!paymentData || !paymentData.data) {
+                showError("Không tìm thấy dữ liệu hợp lệ.");
+                return;
+            }
+            
+            const studentData = paymentData.data.Customer;
+            const paymentInfo = paymentData.data.Payment[0];
+            
+            if (!studentData || !paymentInfo) {
+                showError("Dữ liệu không đầy đủ.");
+                return;
+            }
+            
+            // Cập nhật thông tin học sinh
+            document.getElementById('studentCode').textContent = studentData.ma_kh || "--";
+            document.getElementById('studentName').textContent = studentData.ten_kh || "--";
+            document.getElementById('schoolName').textContent = studentData.ten_truong || "--";
+            document.getElementById('className').textContent = studentData.ten_lop || "--";
+            
+            // Cập nhật nội dung chuyển khoản
+            // Trích xuất tên học sinh (bỏ phần trong ngoặc nếu có)
+            const studentName = studentData.ten_kh ? studentData.ten_kh.split('(')[0].trim() : "";
+            document.getElementById('transferContent').textContent = 
+                `${studentData.ma_kh || ""} ${studentName} thanh toán học phí`;
+            
+            // Hiển thị chi tiết học phí
+            const feeTable = document.getElementById('feeTable');
+            feeTable.innerHTML = '';
+            
+            // Thêm các khoản phí
+            if (paymentInfo.detail && Array.isArray(paymentInfo.detail)) {
+                paymentInfo.detail.forEach(fee => {
+                    const row = document.createElement('tr');
+                    
+                    // Kiểm tra nếu là khoản chiết khấu (số tiền âm)
+                    const isDiscount = fee.tien_phi < 0;
+                    
+                    row.innerHTML = `
+                        <td>${fee.ten_phi || ""}</td>
+                        <td class="fee-amount ${isDiscount ? 'fee-discount' : ''}">
+                            ${formatCurrency(fee.tien_phi || 0)}
+                        </td>
+                    `;
+                    feeTable.appendChild(row);
+                });
+            }
+            
+            // Thêm tổng cộng
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td>Tổng số tiền thanh toán</td>
+                <td class="fee-amount">${formatCurrency(paymentInfo.t_tt || 0)}</td>
+            `;
+            feeTable.appendChild(totalRow);
+            
+            // Cập nhật số tiền trong modal xác nhận
+            document.getElementById('totalAmount').textContent = formatCurrency(paymentInfo.t_tt || 0);
+        }
+        
+        // Hiển thị QR Code từ base64 string
+        function displayQRCode(qrBase64) {
+            console.log("Hiển thị QR code với dữ liệu có độ dài:", qrBase64 ? qrBase64.length : 0);
+            console.log("string base64", qrBase64);
+
+            if (!qrBase64) {
+                console.error("Không có dữ liệu QR!");
+                return;
+            }
+            
+            try {
+                const qrImage = document.getElementById('qrCodeImage');
+                
+                // Hiển thị QR Code
+                qrImage.src = 'data:image/png;base64,' + qrBase64;
+                qrImage.alt = 'QR Code Thanh Toán';
+                qrImage.style.display = 'block';
+                
+                console.log("Đã thiết lập src cho QR code image:", qrImage.src.substring(0, 30) + '...');
+                
+                // Thêm sự kiện để phát hiện lỗi tải ảnh
+                qrImage.onerror = function() {
+                    console.error("Lỗi khi tải QR code image!");
+                };
+                
+                qrImage.onload = function() {
+                    console.log("QR code image đã tải thành công!");
+                };
+            } catch (e) {
+                console.error("Lỗi khi hiển thị QR code:", e);
+            }
+        }
+        
+        // Khởi tạo sự kiện cho các phương thức thanh toán
+        function initPaymentMethods() {
+            // Lấy các phần tử và radio buttons
+            const bankMethod = document.getElementById('bank-method');
+            const qrMethod = document.getElementById('qr-method');
+            const bankRadio = document.getElementById('bankTransfer');
+            const qrRadio = document.getElementById('qrCode');
+
+            // Chọn QR Code làm mặc định khi trang tải
+            qrMethod.classList.add('active');
+            qrRadio.checked = true;
+            document.getElementById('selectedMethod').textContent = 'QR Code';
+
+            // Thêm sự kiện click cho phương thức QR code
+            qrMethod.addEventListener('click', function() {
+                document.querySelectorAll('.payment-method').forEach(element => {
+                    element.classList.remove('active');
+                });
+                qrMethod.classList.add('active');
+                qrRadio.checked = true;
+                document.getElementById('selectedMethod').textContent = 'QR Code';
+
+                // Hiển thị QR code từ API nếu có
+                if (paymentData?.qRStream) {
+                    const qrImage = document.getElementById('qrCodeImage');
+                    if (qrImage.style.display === 'none') {
+                        displayQRCode(paymentData?.qRStream);
+                    }
+                }
+            });
+
+            // Thêm sự kiện click cho phương thức chuyển khoản
+            bankMethod.addEventListener('click', function() {
+                document.querySelectorAll('.payment-method').forEach(element => {
+                    element.classList.remove('active');
+                });
+                bankMethod.classList.add('active');
+                bankRadio.checked = true;
+                document.getElementById('selectedMethod').textContent = 'chuyển khoản ngân hàng';
+            });
+        }
+        
+        // Định dạng số tiền
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
+        }
+        
+        // Định dạng ngày theo dạng yyyy-MM-dd
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Hiển thị thông báo lỗi
+        function showError(message) {
+            // Tạo và hiển thị thông báo lỗi (có thể thay đổi cách hiển thị)
+            alert(message);
+        }
+        
+        // Chọn phương thức thanh toán
+        function selectPaymentMethod(method) {
+            // Cập nhật trạng thái active cho phương thức thanh toán
+            document.querySelectorAll('.payment-method').forEach(element => {
+                element.classList.remove('active');
+            });
+
+            // Tìm phương thức được chọn
+            let selectedElement;
+            if (method === 'bank') {
+                selectedElement = document.getElementById('bank-method');
+                document.getElementById('bankTransfer').checked = true;
+                document.getElementById('selectedMethod').textContent = 'chuyển khoản ngân hàng';
+            } else if (method === 'qr') {
+                selectedElement = document.getElementById('qr-method');
+                document.getElementById('qrCode').checked = true;
+                document.getElementById('selectedMethod').textContent = 'QR Code';
+
+                // Nếu QR code chưa hiển thị và không có sẵn trong dữ liệu API, thì cần phải tạo QR code
+                const qrImage = document.getElementById('qrCodeImage');
+                if (qrImage.style.display === 'none' && (!paymentData?.qRStream)) {
+                    // Trường hợp API không trả về QR, cần gọi API tạo QR
+                    // Nhưng trong trường hợp này, API của bạn đã bao gồm QR nên không cần gọi thêm
+                    console.log('QR code already included in API response');
+                }
+            }
+
+            // Thêm class active
+            if (selectedElement) {
+                selectedElement.classList.add('active');
+            }
+        }
+                
+        // Hiển thị dialog xác nhận thanh toán
+        function confirmPayment() {
+            document.getElementById('confirmationDialog').style.display = 'flex';
+        }
+        
+        // Đóng dialog xác nhận
+        function closeConfirmation() {
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+        
+        // Hoàn tất quá trình thanh toán
+        async function completePayment() {
+    try {
+        // Hiển thị trạng thái đang xử lý
+        document.body.classList.add('loading');
+        
+        // Đóng dialog xác nhận
+        closeConfirmation();
+        
+        // Chuẩn bị dữ liệu để gửi về server
+        const paymentInfo = {
+            ma_hoc_sinh: document.getElementById('studentCode').textContent,
+            ten_hoc_sinh: document.getElementById('studentName').textContent,
+            ma_truong: paymentData?.data?.Customer?.ma_truong || '',
+            stt_rec: paymentData?.data?.Payment?.[0]?.stt_rec || '',
+            so_tien: paymentData?.data?.Payment?.[0]?.t_tt || 0,
+            phuong_thuc: document.getElementById('qrCode').checked ? 'QR_CODE' : 'CHUYEN_KHOAN',
+            ngay_thanh_toan: formatDate(new Date()),
+            ghi_chu: document.getElementById('selectedMethod').textContent
+        };
+        
+        console.log("Gửi thông tin thanh toán:", paymentInfo);
+        
+        // Quyết định URL API dựa trên môi trường
+        let apiUrl;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            apiUrl = "/mock-api/ConfirmPayment"; // API mẫu khi chạy trên localhost
+        } else {
+            apiUrl = "http://172.168.5.14/BHLBK_API/api/v2/ConfirmPayment"; // API thực khi triển khai
+        }
+        
+        // Tạo Nonce và Token theo yêu cầu
+        const nonce = Math.random().toString(36).substring(2);
+        const authString = btoa('fastapi:fast123!@#:' + nonce).trim();
+        const token = `Basic ${authString}`;
+        
+        // Gửi thông tin xác nhận thanh toán về server
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token,
+                    'Nonce': nonce
+                },
+                body: JSON.stringify(paymentInfo)
+            });
+            
+            // Kiểm tra phản hồi
+            if (!response.ok) {
+                throw new Error(`API response error: ${response.status} ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log("Phản hồi từ server:", result);
+            
+            // Tạo mã xác nhận từ phản hồi hoặc tạo ngẫu nhiên nếu không có
+            const confirmationCode = result.confirmationCode || 'TT' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+            document.getElementById('confirmationCode').textContent = confirmationCode;
+            
+            // Hiển thị thông báo thành công
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Cuộn xuống để hiển thị thông báo
+            document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+            
+            // Vô hiệu hóa nút thanh toán để tránh gửi nhiều lần
+            document.querySelector('.btn-group .btn:not(.btn-secondary)').disabled = true;
+            
+            // Lưu trạng thái thanh toán vào localStorage để tránh thanh toán lại khi tải lại trang
+            try {
+                localStorage.setItem(`payment_${paymentInfo.stt_rec}`, 'completed');
+            } catch (e) {
+                console.log('Không thể lưu trạng thái vào localStorage');
+            }
+            
+        } catch (error) {
+            console.error('Lỗi khi gửi xác nhận thanh toán:', error);
+            
+            // Vẫn hiển thị thành công nếu đang ở môi trường phát triển
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                const confirmationCode = 'TT' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+                document.getElementById('confirmationCode').textContent = confirmationCode;
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showError("Có lỗi xảy ra khi xác nhận thanh toán. Vui lòng liên hệ nhà trường để được hỗ trợ.");
+            }
+        } finally {
+            // Ẩn trạng thái đang xử lý
+            document.body.classList.remove('loading');
+        }
+    } catch (error) {
+        console.error('Lỗi trong completePayment:', error);
+        document.body.classList.remove('loading');
+        showError("Có lỗi xảy ra. Vui lòng thử lại sau!");
+    }
+}
+
+// Khởi tạo trang
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Trang đã tải xong, bắt đầu khởi tạo...');
+    fetchStudentData();
+    initPaymentMethods();
+    console.log('Đã gọi fetchStudentData() và initPaymentMethods()');
+});
+    </script>

@@ -7,15 +7,15 @@ const PORT = 3000;
 // Cho phép cross-origin requests
 app.use(cors());
 
-// Phục vụ các file tĩnh từ thư mục hiện tại
-app.use(express.static(__dirname));
+// Phục vụ các file tĩnh từ thư mục public
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Parse JSON requests
 app.use(express.json());
 
 // Route chính để phục vụ trang thanh toán
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Thanh-Toan-Hoc-Phi.html'));
+    res.sendFile(path.join(__dirname, 'public', 'Thanh-Toan-Hoc-Phi.html'));
 });
 
 // Tạo một API mẫu để mô phỏng API thực tế
