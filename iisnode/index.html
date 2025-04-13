@@ -1,0 +1,87 @@
+<html>
+<head>
+    <title>iisnode logs</title>
+    <style type="text/css">
+        body
+        {
+            font-family: "Trebuchet MS" , Arial, Helvetica, sans-serif;
+        }
+        table
+        {
+            border-collapse: collapse;
+        }
+        td, th
+        {
+            border: 1px solid lightgray;
+            padding: 3px 7px 2px 7px;
+        }
+        th
+        {
+            text-align: left;
+            padding-top: 5px;
+            padding-bottom: 4px;
+            background-color: Gray;
+            color: #ffffff;
+        }
+        td.stderr
+        {
+            color: Red;
+        }
+    </style>
+</head>
+<body>
+    <table id="logFilesTable">
+        <tr>
+            <th>
+                Computer name
+            </th>
+            <th>
+                PID
+            </th>
+            <th>
+                Type
+            </th>
+            <th>
+                Created
+            </th>
+            <th>
+                Link
+            </th>
+        </tr>
+    </table>
+    <p id="lastUpdated"></p>
+    <script type="text/javascript">
+
+        // this is replaced with actual data at runtime by code in interceptor.js
+        var logFiles = [{"file":"THINHBM-10224-stdout-1744565380344.txt","computername":"THINHBM","pid":10224,"type":"stdout","created":1744565380344},{"file":"THINHBM-10984-stdout-1744564028917.txt","computername":"THINHBM","pid":10984,"type":"stdout","created":1744564028917},{"file":"THINHBM-12444-stdout-1744564690532.txt","computername":"THINHBM","pid":12444,"type":"stdout","created":1744564690532},{"file":"THINHBM-13540-stdout-1744564678774.txt","computername":"THINHBM","pid":13540,"type":"stdout","created":1744564678774},{"file":"THINHBM-13800-stdout-1744564077438.txt","computername":"THINHBM","pid":13800,"type":"stdout","created":1744564077438},{"file":"THINHBM-14060-stdout-1744564014791.txt","computername":"THINHBM","pid":14060,"type":"stdout","created":1744564014791},{"file":"THINHBM-1572-stdout-1744564029194.txt","computername":"THINHBM","pid":1572,"type":"stdout","created":1744564029194},{"file":"THINHBM-16664-stdout-1744564340241.txt","computername":"THINHBM","pid":16664,"type":"stdout","created":1744564340241},{"file":"THINHBM-17104-stdout-1744565496080.txt","computername":"THINHBM","pid":17104,"type":"stdout","created":1744565496080},{"file":"THINHBM-18960-stdout-1744564674395.txt","computername":"THINHBM","pid":18960,"type":"stdout","created":1744564674395},{"file":"THINHBM-21292-stdout-1744565377974.txt","computername":"THINHBM","pid":21292,"type":"stdout","created":1744565377974},{"file":"THINHBM-22268-stdout-1744564066867.txt","computername":"THINHBM","pid":22268,"type":"stdout","created":1744564066867},{"file":"THINHBM-23700-stdout-1744565369282.txt","computername":"THINHBM","pid":23700,"type":"stdout","created":1744565369282},{"file":"THINHBM-23908-stdout-1744564059971.txt","computername":"THINHBM","pid":23908,"type":"stdout","created":1744564059971},{"file":"THINHBM-24268-stdout-1744564066576.txt","computername":"THINHBM","pid":24268,"type":"stdout","created":1744564066576},{"file":"THINHBM-4192-stdout-1744564688195.txt","computername":"THINHBM","pid":4192,"type":"stdout","created":1744564688195},{"file":"THINHBM-5328-stdout-1744564060283.txt","computername":"THINHBM","pid":5328,"type":"stdout","created":1744564060283},{"file":"THINHBM-5444-stdout-1744564700083.txt","computername":"THINHBM","pid":5444,"type":"stdout","created":1744564700083},{"file":"THINHBM-564-stdout-1744564953738.txt","computername":"THINHBM","pid":564,"type":"stdout","created":1744564953738},{"file":"THINHBM-7640-stdout-1744564966408.txt","computername":"THINHBM","pid":7640,"type":"stdout","created":1744564966408},{"file":"THINHBM-8500-stdout-1744564014496.txt","computername":"THINHBM","pid":8500,"type":"stdout","created":1744564014496}];
+        var lastUpdated = 1744565496144;
+        var date = new Date();
+
+        date.setTime(lastUpdated);
+        document.getElementById('lastUpdated').innerHTML = 'Index was last updated ' + date;
+
+        logFiles.sort(function (a, b) {
+            return b.created - a.created;
+        });
+
+        var logFilesTable = document.getElementById("logFilesTable");
+        for (var i = 0; i < logFiles.length; i++) {
+            var logFile = logFiles[i];
+            date.setTime(logFile.created);
+            var row = logFilesTable.insertRow(-1);
+            var computerNameCell = row.insertCell(0);
+            var pidCell = row.insertCell(1);
+            var typeCell = row.insertCell(2);
+            var dateCell = row.insertCell(3);
+            var logCell = row.insertCell(4);
+            computerNameCell.innerHTML = logFile.computername;
+            pidCell.innerHTML = logFile.pid.toString();
+            typeCell.innerHTML = logFile.type;
+            typeCell.setAttribute('class', logFile.type);
+            dateCell.innerHTML = date.toString();
+            logCell.innerHTML = '<a href="' + logFile.file + '">log</a>';
+        };
+
+    </script>
+</body>
+</html>

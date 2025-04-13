@@ -1,0 +1,2 @@
+Server đang chạy tại http://localhost:3000
+Để xem trang thanh toán học phí, truy cập: http://localhost:3000?stt_rec=A000312452HD8
