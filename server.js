@@ -129,6 +129,10 @@ app.post('/mock-api/ConfirmPayment', (req, res) => {
     });
 });
 
+if (process.env.NODE_ENV === 'production') {
+    module.exports = app;
+}
+
 // Khởi động máy chủ
 app.listen(PORT, () => {
     console.log(`Server đang chạy tại http://localhost:${PORT}`);
